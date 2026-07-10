@@ -47,3 +47,31 @@ def check_readability(soup):
         f"(from {len(words)} words, {sentences} sentences, {characters} letters).",
     ]
  
+ 
+def _visible_text(soup):
+    """Return page text with <script> and <style> tags removed (their contents
+    are code, not readable words)."""
+    # Copy the page first so we don't change it for the other checks.
+    page = copy.copy(soup)
+    for tag in page.find_all(["script", "style", "noscript"]):
+        tag.decompose()
+    return page.get_text(separator=" ")
+ 
+ 
+def _count_words(text):
+    # re.findall finds every match in the text and returns them as a list.
+    # [a-zA-Z'] means "any letter or an apostrophe"; + means "one or more",
+    # so each run of letters (like "don't") counts as one word.
+    return re.findall(r"[a-zA-Z']+", text)
+ 
+ 
+def _count_sentences(text):
+    # [.!?] means "a full stop, exclamation mark or question mark". We count
+    # how many there are, but never return fewer than 1 (to avoid dividing by 0).
+    sentences = re.findall(r"[.!?]+", text)
+    return max(len(sentences), 1)
+ 
+ 
+def _count_characters(word):
+    """Count the letters in a word, skipping apostrophes (so "don't" is 4)."""
+    return len(word.replace("'", ""))
