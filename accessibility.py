@@ -31,6 +31,8 @@ def _check_image_alt_text(soup):
     for index, img in enumerate(soup.find_all("img"), start=1):
         alt = img.get("alt")
         src = img.get("src", "(no src)")
+        if len(src) > 50:
+            src = src[:47] + "..."
         if alt is None:
             problems.append(f"Image #{index} ({src}) has no alt attribute at all.")
         elif alt.strip() == "":

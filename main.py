@@ -1,47 +1,49 @@
 """
-A11yScan — command-line entry point (Day 1).
+A11yScan — command-line entry point (Day 2).
 
-Usage:
-python main.py <url>
-
-Day 1 only proves the plumbing: fetch a page and print its title.
-The actual checks arrive on Days 2 and 3.
+Now runs the accessibility checker after fetching the page.
 """
 
 import sys
+import textwrap
 import requests
 from bs4 import BeautifulSoup
 
+import accessibility
+
 
 def fetch_page(url):
-    """Download a URL and return a parsed BeautifulSoup object.
-
-    requests downloads the raw HTML; BeautifulSoup turns that HTML string
-    into an object we can search (find tags, read attributes, get text).
-    """
-    # A User-Agent makes us look like a normal browser to polite servers.
     headers = {"User-Agent": "A11yScan/0.1 (learning project)"}
     response = requests.get(url, headers=headers, timeout=10)
-    response.raise_for_status()  # turn a 404/500 into an exception
+    response.raise_for_status()
     return BeautifulSoup(response.text, "html.parser")
 
 
+def print_section(title, description, issues):
+    print(f"\n=== {title} ===")
+    for line in textwrap.wrap(description, width=78):
+        print(line)
+    print()
+    if not issues:
+        print("  No problems found.")
+    else:
+        for issue in issues:
+            print(f"  - {issue}")
+
+
 def main():
-    # sys.argv is the list of command-line arguments; argv[0] is the script name.
     if len(sys.argv) < 2:
         print("Usage: python main.py <url>")
         sys.exit(1)
 
     url = sys.argv[1]
-    print(f"Scanning: {url}\n")
+    print(f"Scanning: {url}")
 
     soup = fetch_page(url)
 
-    title = soup.title.string.strip() if soup.title and soup.title.string else "(no <title> found)"
-    print(f"Page title: {title}")
+    print_section("Accessibility", accessibility.DESCRIPTION,
+                  accessibility.check_accessibility(soup))
 
 
 if __name__ == "__main__":
-    # This guard means the code only runs when the file is executed directly,
-    # not when it's imported by another module (we'll rely on that on Day 4).
     main()
