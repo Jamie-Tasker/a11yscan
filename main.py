@@ -1,25 +1,16 @@
 """
-A11yScan — command-line entry point (Day 3).
- 
-Running the Accessibility and Readability checkers in sequence.
+A11yScan — command-line entry point (Day 5).
 """
- 
+
 import sys
 import textwrap
-import requests
-from bs4 import BeautifulSoup
- 
+
+from fetch import fetch_page
 import accessibility
 import readability
- 
- 
-def fetch_page(url):
-    headers = {"User-Agent": "A11yScan/0.1 (learning project)"}
-    response = requests.get(url, headers=headers, timeout=10)
-    response.raise_for_status()
-    return BeautifulSoup(response.text, "html.parser")
- 
- 
+import style
+
+
 def print_section(title, description, issues):
     print(f"\n=== {title} ===")
     # Wrap the intro so it reads nicely in a terminal.
@@ -31,23 +22,28 @@ def print_section(title, description, issues):
     else:
         for issue in issues:
             print(f"  - {issue}")
- 
- 
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python main.py <url>")
         sys.exit(1)
- 
+
     url = sys.argv[1]
     print(f"Scanning: {url}")
- 
-    soup = fetch_page(url)
- 
+
+    soup, error = fetch_page(url)
+    if error:
+        print(f"\nCould not scan the page: {error}")
+        sys.exit(1)
+
     print_section("Accessibility", accessibility.DESCRIPTION,
                   accessibility.check_accessibility(soup))
     print_section("Readability", readability.DESCRIPTION,
                   readability.check_readability(soup))
- 
- 
+    print_section("Style guide", style.DESCRIPTION,
+                  style.check_style(soup))
+
+
 if __name__ == "__main__":
     main()
